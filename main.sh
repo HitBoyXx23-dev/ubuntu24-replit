@@ -143,6 +143,22 @@ ubuntu_exec() {
       "$@"
 }
 
+BASE_PACKAGES=(nano vim less curl wget git ca-certificates gnupg python3 python3-pip unzip)
+
+provision_base_packages() {
+  local marker="/root/.base_provisioned"
+
+  if [[ -f "$ROOTFS$marker" ]]; then
+    return
+  fi
+
+  log "Installing base packages (${BASE_PACKAGES[*]})..."
+  ubuntu_exec bash -c "dpkg --configure -a >/dev/null 2>&1; apt-get update -qq && apt-get install -y -qq ${BASE_PACKAGES[*]} >/dev/null" \
+    || log "Warning: base package provisioning failed; you can retry with 'apt install' inside the terminal."
+
+  ubuntu_exec touch "$marker" 2>/dev/null || true
+}
+
 download_novnc() {
   if [[ -f "$NOVNC_DIR/vnc.html" ]]; then
     return
@@ -537,6 +553,10 @@ start_gateway() {
 :$PUBLIC_PORT {
   encode gzip
 
+  header {
+    Cache-Control "no-store, no-cache, must-revalidate"
+  }
+
   @terminal path /terminal /terminal/*
   handle @terminal {
     reverse_proxy 127.0.0.1:$TTYD_BACKEND_PORT
@@ -579,6 +599,7 @@ case "${1:-start}" in
 esac
 
 clean_stale
+provision_base_packages
 download_novnc
 install_ubuntu_ui
 create_shell_scripts
