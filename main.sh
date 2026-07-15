@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PUBLIC_PORT="${PORT:-3000}"
+PUBLIC_PORT="${PORT:-5000}"
 NOVNC_BACKEND_PORT="${NOVNC_BACKEND_PORT:-6080}"
 TTYD_BACKEND_PORT="${TTYD_BACKEND_PORT:-7681}"
 
@@ -127,6 +127,7 @@ ubuntu_exec() {
     -b /proc \
     -b /sys \
     -b /tmp \
+    -b /etc/resolv.conf:/etc/resolv.conf \
     -b "$PWD:/workspace" \
     -w /root \
     /usr/bin/env -i \
@@ -407,6 +408,7 @@ exec "$PROOT" \
   -b /proc \
   -b /sys \
   -b /tmp \
+  -b /etc/resolv.conf:/etc/resolv.conf \
   -b "$PWD:/workspace" \
   -w /root \
   /usr/bin/env -i \
@@ -519,7 +521,6 @@ start_terminal() {
     --client-option fontSize=15 \
     --client-option cursorBlink=true \
     --client-option scrollback=10000 \
-    --client-option copyOnSelect=true \
     "$LOGIN_SCRIPT" \
     >"$LOG_DIR/ttyd.log" 2>&1 &
   register_service "ttyd" "$!"
